@@ -1,4 +1,4 @@
-## Challenge: Spatial Linking of Heterogenous Data
+# Challenge: Spatial Linking of Heterogenous Data
 ## Champions
 - Anne Göbels, 
 - Oliver Schulz
