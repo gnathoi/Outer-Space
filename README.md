@@ -10,7 +10,7 @@
 
 Large amounts of heterogeneous data for existing building assets are often just a conglomeration of paper documents and/or files. While humans can often establish spatial relationships between documents, the amount of data is often too large to keep an overview, and there is still a lack of standardised meta-descriptions to formalise these spatial relationships between them. Although spatial relationships can be established within software applications, these are then locked in data silos. Additionally, the spatial relations are often fuzzy and cannot be precisely defined. 
 To enable spatial querying of this data, a meta-schema (i.e., vendor-neutral, outside of specific software) must first be developed. 
-- bspw. extension of ICDD schema?
+- E.G. extension of ICDD schema?
 
 Two main approaches could be considered:
 
