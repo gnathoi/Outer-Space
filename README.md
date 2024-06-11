@@ -1,22 +1,22 @@
 # Challenge: Spatial Linking of Heterogenous Data
 ## Champions
-- Anne Göbels, 
+- Anne Göbels,
 - Oliver Schulz
 
-## Number of people per team: 
+## Number of people per team:
 4
 
 ## Challenge description
 
-Large amounts of heterogeneous data for existing building assets are often just a conglomeration of paper documents and/or files. While humans can often establish spatial relationships between documents, the amount of data is often too large to keep an overview, and there is still a lack of standardised meta-descriptions to formalise these spatial relationships between them. Although spatial relationships can be established within software applications, these are then locked in data silos. Additionally, the spatial relations are often fuzzy and cannot be precisely defined. 
-To enable spatial querying of this data, a meta-schema (i.e., vendor-neutral, outside of specific software) must first be developed. 
+Large amounts of heterogeneous data for existing building assets are often just a conglomeration of paper documents and/or files. While humans can often establish spatial relationships between documents, the amount of data is often too large to keep an overview, and there is still a lack of standardised meta-descriptions to formalise these spatial relationships between them. Although spatial relationships can be established within software applications, these are then locked in data silos. Additionally, the spatial relations are often fuzzy and cannot be precisely defined.
+To enable spatial querying of this data, a meta-schema (i.e., vendor-neutral, outside of specific software) must first be developed.
 - E.G. extension of ICDD schema?
 
 Two main approaches could be considered:
 
 1. Utilising mathematical descriptions such as vectors, matrices, etc., to enable precise positional descriptions. The advantage would be precise positioning, but it may not be intuitive to use for humans.
-    
-2. Utilising natural language. This approach would be more intuitive and easier to understand but may not be as precise as the mathematical approach. However, it may deal better with the fuzziness. 
+
+2. Utilising natural language. This approach would be more intuitive and easier to understand but may not be as precise as the mathematical approach. However, it may deal better with the fuzziness.
 
 ## Objective
 

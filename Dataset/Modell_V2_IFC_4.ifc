@@ -16,7 +16,7 @@ HEADER;
 * Header model creation date:     Tue Jan 18 18:13:34 2022
 * EDMuser:                        sdai-user
 * EDMgroup:                       sdai-group
-* License ID and type:            5605 : Permanent license. Expiry date: 
+* License ID and type:            5605 : Permanent license. Expiry date:
 * EDMstepFileFactory options:     020000
 ******************************************************************************************/
 FILE_DESCRIPTION(('ViewDefinition [ReferenceView_V1.2]'),'2;1');

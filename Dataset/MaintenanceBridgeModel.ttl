@@ -303,7 +303,7 @@ ins:Cap_right a brcomp:Cap ;
     brcomp:height "0.35"^^xsd:float ;
     brcomp:length "56.75"^^xsd:float ;
     brcomp:width "2.0"^^xsd:float ;
-    dot:hasDamageArea 
+    dot:hasDamageArea
         ins:DamageArea_NY0M9P1L;
     reloc:containedInRight ins:Girder ;
     reloc:equalLongitudinal ins:Girder ;
@@ -315,7 +315,7 @@ ins:Joint_front a brot:Joint ;
     brcomp:height "0.05"^^xsd:float ;
     brcomp:length "0.027"^^xsd:float ;
     brcomp:width "12.0"^^xsd:float ;
-    dot:hasDamageArea 
+    dot:hasDamageArea
         ins:DamageArea_RE0UU0J5;
     reloc:containedInTop ins:Coating ;
     reloc:equalTransversal ins:Girder ;
