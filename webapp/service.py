@@ -61,33 +61,28 @@ html_template = """
                 position: absolute;
                 top: 20px;
                 right: 20px;
-                width: 100px;
+                width: 120px;
                 height: 30px;
                 background-color: #4682b4;
                 border-radius: 15px;
                 cursor: pointer;
                 display: flex;
-                justify-content: space-between;
+                justify-content: center;
                 align-items: center;
-                padding: 0 10px;
+                padding: 0;
                 box-sizing: border-box;
                 transition: background-color 0.3s;
-            }
-            .toggle-button span {
                 color: #fff;
+                font-weight: bold;
             }
             .toggle-button.active {
                 background-color: #5f9ea0;
-                justify-content: flex-end;
             }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="toggle-button" id="toggleButton" onclick="toggleMode()">
-                <span>NL</span>
-                <span>SPARQL</span>
-            </div>
+            <div class="toggle-button" id="toggleButton" onclick="toggleMode()">NL</div>
             <h1>Enter text to process</h1>
             <form method="post" id="textForm">
                 <input type="hidden" name="mode" id="modeInput" value="NL">
@@ -104,8 +99,10 @@ html_template = """
                 toggleButton.classList.toggle('active');
                 if (toggleButton.classList.contains('active')) {
                     modeInput.value = 'SPARQL';
+                    toggleButton.textContent = 'SPARQL';
                 } else {
                     modeInput.value = 'NL';
+                    toggleButton.textContent = 'NL';
                 }
             }
         </script>
