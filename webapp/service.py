@@ -1,6 +1,7 @@
 import io
 import json
 import os
+from typing import List
 
 import pandas as pd
 import rdflib
@@ -13,6 +14,7 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from pyparsing import ParseException
+from rdflib import Graph, Literal, URIRef
 
 response = requests.get("http://httpbin.org/user-agent")
 user_agent = json.loads(response.text)["user-agent"]
@@ -53,10 +55,37 @@ def display_query_results(results):
     return pd.DataFrame(data)
 
 
-def graph_to_documents(graph):
-    documents = []
+# def graph_to_documents(graph):
+#     documents = []
+#     for subj, pred, obj in graph:
+#         documents.append(Document(page_content=f"{subj} {pred} {obj}"))
+#     return documents
+
+
+def graph_to_documents(graph: Graph) -> List[Document]:
+    # Capture prefixes
+    prefix_lines = []
+    for prefix, namespace in graph.namespace_manager.namespaces():
+        prefix_lines.append(f"@prefix {prefix}: <{namespace}> .")
+
+    # Convert RDF statements
+    statements = []
     for subj, pred, obj in graph:
-        documents.append(Document(page_content=f"{subj} {pred} {obj}"))
+        if isinstance(obj, Literal):
+            obj_repr = f'"{obj}"^^<{obj.datatype}>' if obj.datatype else f'"{obj}"'
+        elif isinstance(obj, URIRef):
+            obj_repr = f"<{obj}>"
+        else:
+            obj_repr = str(obj)
+
+        subj_repr = f"<{subj}>" if isinstance(subj, URIRef) else str(subj)
+        pred_repr = f"<{pred}>" if isinstance(pred, URIRef) else str(pred)
+
+        statements.append(f"{subj_repr} {pred_repr} {obj_repr} .")
+
+    # Combine prefixes and statements into a single document content
+    document_content = "\n".join(prefix_lines + [""] + statements)
+    documents = [Document(page_content=document_content)]
     return documents
 
 
@@ -110,7 +139,7 @@ html_template = """
                 margin-bottom: 20px;
             }
             .dark-mode h1 {
-                color: #ffdd57;
+                color: #d3d3d3;
             }
             textarea, input[type="submit"] {
                 box-sizing: border-box;
@@ -126,6 +155,20 @@ html_template = """
                 height: 200px;
                 resize: horizontal;
                 overflow: auto;
+            }
+            .thinking {
+                animation: pulse 1.5s infinite;
+            }
+            @keyframes pulse {
+                0% {
+                    box-shadow: 0 0 10px rgba(70, 130, 180, 0.7);
+                }
+                50% {
+                    box-shadow: 0 0 20px rgba(70, 130, 180, 1);
+                }
+                100% {
+                    box-shadow: 0 0 10px rgba(70, 130, 180, 0.7);
+                }
             }
             input[type="submit"] {
                 padding: 12px 20px;
@@ -263,7 +306,7 @@ html_template = """
             <h1>RAGdol</h1>
             <form method="post" id="textForm">
                 <input type="hidden" name="mode" id="modeInput" value="NL">
-                <textarea name="input_text" required></textarea>
+                <textarea name="input_text" id="inputText" required></textarea>
                 <input type="submit" value="Submit">
             </form>
             <div class="scrollable-div" id="resultBox">
@@ -323,13 +366,15 @@ html_template = """
                 renderMarkdown();
             }
             document.getElementById('textForm').onsubmit = function() {
+                var inputText = document.getElementById('inputText');
+                inputText.classList.add('thinking');
                 setTimeout(function() {
                     window.scrollTo(0, 0);
                 }, 100);
             };
             function renderMarkdown() {
                 var resultBox = document.getElementById('result');
-                resultBox.innerHTML = marked(resultBox.innerHTML);
+                resultBox.innerHTML = marked(resultBox.innerText);
             }
         </script>
     </body>
