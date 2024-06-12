@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import re
 from typing import List
 
 import pandas as pd
@@ -34,6 +35,15 @@ def perform_sparql_query(graph, query):
     return graph.query(query)
 
 
+def replace_prefix(dataframe):
+    """Replace the prefix in each entry of the dataframe with 'ins:'."""
+
+    def replace_uri(uri):
+        return re.sub(r".*#", "ins:", uri)
+
+    return dataframe.applymap(replace_uri)
+
+
 def display_query_results(results):
     """Display SPARQL query results as a pandas DataFrame."""
     # Transform the results into a list of dictionaries
@@ -52,7 +62,9 @@ def display_query_results(results):
         data.append(row_dict)
 
     # Create and display a DataFrame
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    df = replace_prefix(df)
+    return df
 
 
 def graph_to_documents(graph: Graph) -> List[Document]:
@@ -147,6 +159,26 @@ html_template = """
                 height: 200px;
                 resize: horizontal;
                 overflow: auto;
+                position: relative;
+            }
+            .stop-button {
+                position: absolute;
+                bottom: 10px;
+                right: 10px;
+                background-color: white;
+                border: 2px solid black;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .stop-button::before {
+                content: "■";
+                color: black;
+                font-size: 20px;
             }
             .thinking {
                 animation: pulse 1.5s infinite;
@@ -321,6 +353,7 @@ html_template = """
                 <input type="hidden" name="mode" id="modeInput" value="NL">
                 <textarea name="input_text" id="inputText" required></textarea>
                 <input type="submit" value="Submit">
+                <button type="button" class="stop-button" id="stopButton"></button>
             </form>
             <div class="scrollable-div chat-container" id="chatContainer">
                 {% for chat in chat_history %}
@@ -387,6 +420,13 @@ html_template = """
                 setTimeout(function() {
                     window.scrollTo(0, 0);
                 }, 100);
+            };
+            document.getElementById('stopButton').onclick = function() {
+                var inputText = document.getElementById('inputText');
+                inputText.classList.remove('thinking');
+                inputText.value = '';
+                inputText.focus();
+                document.getElementById('textForm').reset();
             };
             function renderMarkdown() {
                 var resultBox = document.getElementById('result');
