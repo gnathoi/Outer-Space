@@ -63,9 +63,9 @@ def graph_to_documents(graph):
 ttl_file = "DamageInstances.ttl"  # Change this to your Turtle file path
 ont_ttl_file = "DamageLocationOntology.ttl"
 graph = load_ttl_file(ttl_file)
-# graph_ont = load_ttl_file(ont_ttl_file)
+graph_ont = load_ttl_file(ont_ttl_file)
 
-rdf_text_data = graph_to_documents(graph)  # + graph_to_documents(graph_ont)
+rdf_text_data = graph_to_documents(graph) + graph_to_documents(graph_ont)
 
 # Split text data for embeddings
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=0)
@@ -93,6 +93,7 @@ html_template = """
                 align-items: center;
                 height: 100vh;
                 background-color: #f0f0f0;
+                transition: background-color 0.3s, color 0.3s;
             }
             .container {
                 position: relative;
@@ -102,10 +103,14 @@ html_template = """
                 padding: 30px;
                 border-radius: 10px;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                transition: background-color 0.3s, color 0.3s;
             }
             h1 {
                 color: #333;
                 margin-bottom: 20px;
+            }
+            .dark-mode h1 {
+                color: #ffdd57;
             }
             textarea, input[type="submit"] {
                 box-sizing: border-box;
@@ -115,6 +120,7 @@ html_template = """
                 border-radius: 5px;
                 border: 1px solid #ccc;
                 font-size: 16px;
+                transition: background-color 0.3s, color 0.3s, border-color 0.3s;
             }
             textarea {
                 height: 200px;
@@ -142,6 +148,7 @@ html_template = """
                 text-align: left;
                 font-size: 16px;
                 background-color: #f8f9fa;
+                transition: background-color 0.3s, color 0.3s, border-color 0.3s;
             }
             .toggle-button {
                 position: absolute;
@@ -164,6 +171,24 @@ html_template = """
             }
             .toggle-button.active {
                 background-color: #5f9ea0;
+            }
+            .dark-mode-button {
+                position: absolute;
+                top: 70px;
+                right: 20px;
+                width: 40px;
+                height: 40px;
+                background-color: #333;
+                border-radius: 20px;
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding: 0;
+                box-sizing: border-box;
+                transition: background-color 0.3s, color 0.3s;
+                color: #fff;
+                font-size: 24px;
             }
             table {
                 border-collapse: collapse;
@@ -191,6 +216,7 @@ html_template = """
                 border: 1px solid #ddd;
                 border-radius: 5px;
                 text-align: left;
+                transition: background-color 0.3s, color 0.3s, border-color 0.3s;
             }
             .download-button {
                 padding: 12px 20px;
@@ -207,20 +233,42 @@ html_template = """
             .download-button:hover {
                 background-color: #5f9ea0;
             }
+            .dark-mode {
+                background-color: #121212;
+                color: #ffffff;
+            }
+            .dark-mode .container {
+                background-color: #1e1e1e;
+                color: #ffffff;
+            }
+            .dark-mode textarea, .dark-mode input[type="submit"], .dark-mode p, .dark-mode .scrollable-div {
+                background-color: #333;
+                color: #ffffff;
+                border-color: #555;
+            }
+            .dark-mode input[type="submit"] {
+                background-color: #5f9ea0;
+            }
+            .dark-mode input[type="submit"]:hover {
+                background-color: #4682b4;
+            }
         </style>
     </head>
     <body>
         <div class="container">
             <div class="toggle-button" id="toggleButton" onclick="toggleMode()">NL</div>
+            <div class="dark-mode-button" id="darkModeButton" onclick="toggleDarkMode()">
+                <span class="icon">🌜</span>
+            </div>
             <h1>RAGdol</h1>
             <form method="post" id="textForm">
                 <input type="hidden" name="mode" id="modeInput" value="NL">
                 <textarea name="input_text" required></textarea>
                 <input type="submit" value="Submit">
             </form>
-            <div class="scrollable-div">
+            <div class="scrollable-div" id="resultBox">
                 <p><i>{{ question }}</i></p>
-                <div>{{ result|safe }}</div>
+                <div id="result">{{ result|safe }}</div>
                 {% if result %}
                 <form method="post" action="/download">
                     <input type="hidden" name="result_data" value="{{ result_data }}">
@@ -230,6 +278,7 @@ html_template = """
                 {% endif %}
             </div>
         </div>
+        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <script>
             function toggleMode() {
                 var toggleButton = document.getElementById('toggleButton');
@@ -244,6 +293,16 @@ html_template = """
                 }
                 localStorage.setItem('toggleButtonState', modeInput.value);
             }
+            function toggleDarkMode() {
+                var darkModeButton = document.getElementById('darkModeButton');
+                document.body.classList.toggle('dark-mode');
+                if (document.body.classList.contains('dark-mode')) {
+                    darkModeButton.innerHTML = '<span class="icon">🌞</span>';
+                } else {
+                    darkModeButton.innerHTML = '<span class="icon">🌜</span>';
+                }
+                localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            }
             window.onload = function() {
                 var toggleButton = document.getElementById('toggleButton');
                 var modeInput = document.getElementById('modeInput');
@@ -257,12 +316,21 @@ html_template = """
                     modeInput.value = 'NL';
                     toggleButton.textContent = 'NL';
                 }
+                if (localStorage.getItem('darkMode') === 'true') {
+                    document.body.classList.add('dark-mode');
+                    document.getElementById('darkModeButton').innerHTML = '<span class="icon">🌞</span>';
+                }
+                renderMarkdown();
             }
             document.getElementById('textForm').onsubmit = function() {
                 setTimeout(function() {
                     window.scrollTo(0, 0);
                 }, 100);
             };
+            function renderMarkdown() {
+                var resultBox = document.getElementById('result');
+                resultBox.innerHTML = marked(resultBox.innerHTML);
+            }
         </script>
     </body>
 </html>
