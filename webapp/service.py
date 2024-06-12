@@ -55,13 +55,6 @@ def display_query_results(results):
     return pd.DataFrame(data)
 
 
-# def graph_to_documents(graph):
-#     documents = []
-#     for subj, pred, obj in graph:
-#         documents.append(Document(page_content=f"{subj} {pred} {obj}"))
-#     return documents
-
-
 def graph_to_documents(graph: Graph) -> List[Document]:
     # Capture prefixes
     prefix_lines = []
@@ -295,6 +288,27 @@ html_template = """
             .dark-mode input[type="submit"]:hover {
                 background-color: #4682b4;
             }
+            .chat-container {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .chat-message {
+                display: flex;
+                flex-direction: column;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                background-color: #fff;
+            }
+            .chat-message.user {
+                align-self: flex-end;
+                background-color: #e0f7fa;
+            }
+            .chat-message.bot {
+                align-self: flex-start;
+                background-color: #fce4ec;
+            }
         </style>
     </head>
     <body>
@@ -309,16 +323,19 @@ html_template = """
                 <textarea name="input_text" id="inputText" required></textarea>
                 <input type="submit" value="Submit">
             </form>
-            <div class="scrollable-div" id="resultBox">
-                <p><i>{{ question }}</i></p>
-                <div id="result">{{ result|safe }}</div>
-                {% if result %}
-                <form method="post" action="/download">
-                    <input type="hidden" name="result_data" value="{{ result_data }}">
-                    <input type="hidden" name="result_type" value="{{ result_type }}">
-                    <button type="submit" class="download-button">Download Result</button>
-                </form>
-                {% endif %}
+            <div class="scrollable-div chat-container" id="chatContainer">
+                {% for chat in chat_history %}
+                    <div class="chat-message {{ chat.sender }}">
+                        <p>{{ chat.message }}</p>
+                        {% if chat.sender == 'bot' and chat.downloadable %}
+                            <form method="post" action="/download">
+                                <input type="hidden" name="result_data" value="{{ chat.result_data }}">
+                                <input type="hidden" name="result_type" value="{{ chat.result_type }}">
+                                <button type="submit" class="download-button">Download Result</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                {% endfor %}
             </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -388,11 +405,15 @@ def index():
     question = ""
     result_data = ""
     result_type = "text"
+    chat_history = []
     if request.method == "POST":
         try:
             input_text = request.form["input_text"]
             mode = request.form["mode"]
             question = input_text
+            chat_history.append(
+                {"sender": "user", "message": question, "downloadable": False}
+            )
             if mode == "NL":
                 # Use the RetrievalQA class and the similarity_search method
                 docs = vectorstore.similarity_search(input_text)
@@ -403,6 +424,15 @@ def index():
                 result = res["result"]
                 result_data = result
                 result_type = "text"
+                chat_history.append(
+                    {
+                        "sender": "bot",
+                        "message": result,
+                        "downloadable": True,
+                        "result_data": result_data,
+                        "result_type": result_type,
+                    }
+                )
             elif mode == "SPARQL":
                 try:
                     # Perform the SPARQL query and display the results as a DataFrame
@@ -413,20 +443,39 @@ def index():
                     )  # Convert DataFrame to HTML
                     result_data = df.to_csv(index=False)
                     result_type = "dataframe"
+                    chat_history.append(
+                        {
+                            "sender": "bot",
+                            "message": result,
+                            "downloadable": True,
+                            "result_data": result_data,
+                            "result_type": result_type,
+                        }
+                    )
                 except ParseException:
                     result = "Error: Invalid SPARQL query"
                     result_data = result
                     result_type = "text"
+                    chat_history.append(
+                        {"sender": "bot", "message": result, "downloadable": False}
+                    )
         except KeyError as e:
             result = f"Error: Missing form field - {str(e)}"
             result_data = result
             result_type = "text"
+            chat_history.append(
+                {"sender": "bot", "message": result, "downloadable": False}
+            )
+    else:
+        # Load chat history from previous sessions or start fresh
+        chat_history = []
     return render_template_string(
         html_template,
         result=result,
         question=question,
         result_data=result_data,
         result_type=result_type,
+        chat_history=chat_history,
     )
 
 
