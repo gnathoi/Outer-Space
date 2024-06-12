@@ -97,54 +97,60 @@ html_template = """
             .container {
                 position: relative;
                 width: 80%;
-                text-align: center;
-                background-color: #f0f8ff;
-                padding: 20px;
+                max-width: 900px;
+                background-color: #ffffff;
+                padding: 30px;
                 border-radius: 10px;
-                box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             }
-            h1, h2 {
+            h1 {
                 color: #333;
+                margin-bottom: 20px;
             }
             textarea, input[type="submit"] {
                 box-sizing: border-box;
                 width: 100%;
-                padding: 10px;
+                padding: 12px;
                 margin: 10px 0;
                 border-radius: 5px;
                 border: 1px solid #ccc;
+                font-size: 16px;
             }
             textarea {
-                height: 200px;  /* Adjust the height as needed */
-                resize: horizontal;  /* Allow horizontal resizing */
-                overflow: auto;  /* Add a scrollbar if the text overflows */
+                height: 200px;
+                resize: horizontal;
+                overflow: auto;
             }
             input[type="submit"] {
-                padding: 10px 20px;
+                padding: 12px 20px;
                 border: none;
                 border-radius: 5px;
                 background-color: #4682b4;
                 color: #fff;
                 cursor: pointer;
+                font-size: 16px;
+                font-weight: bold;
+                transition: background-color 0.3s;
             }
             input[type="submit"]:hover {
                 background-color: #5f9ea0;
             }
             p {
-                background-color: #f8f9fa;
                 padding: 20px;
                 border-radius: 5px;
                 border: 1px solid #eee;
                 text-align: left;
+                font-size: 16px;
+                background-color: #f8f9fa;
             }
             .toggle-button {
                 position: absolute;
                 top: 20px;
                 right: 20px;
                 width: 120px;
-                height: 30px;
+                height: 40px;
                 background-color: #4682b4;
-                border-radius: 15px;
+                border-radius: 20px;
                 cursor: pointer;
                 display: flex;
                 justify-content: center;
@@ -154,11 +160,11 @@ html_template = """
                 transition: background-color 0.3s;
                 color: #fff;
                 font-weight: bold;
+                font-size: 16px;
             }
             .toggle-button.active {
                 background-color: #5f9ea0;
             }
-            /* DataFrame styling */
             table {
                 border-collapse: collapse;
                 width: 100%;
@@ -177,7 +183,6 @@ html_template = """
                 background-color: #4CAF50;
                 color: white;
             }
-            /* Add a style for the scrollable div */
             .scrollable-div {
                 max-height: 500px;
                 overflow-y: auto;
@@ -185,15 +190,19 @@ html_template = """
                 padding: 20px;
                 border: 1px solid #ddd;
                 border-radius: 5px;
+                text-align: left;
             }
             .download-button {
-                padding: 10px 20px;
+                padding: 12px 20px;
                 border: none;
                 border-radius: 5px;
                 background-color: #4682b4;
                 color: #fff;
                 cursor: pointer;
                 margin-top: 10px;
+                font-size: 16px;
+                font-weight: bold;
+                transition: background-color 0.3s;
             }
             .download-button:hover {
                 background-color: #5f9ea0;
@@ -209,7 +218,6 @@ html_template = """
                 <textarea name="input_text" required></textarea>
                 <input type="submit" value="Submit">
             </form>
-            <!-- Wrap the result in a scrollable div -->
             <div class="scrollable-div">
                 <p><i>{{ question }}</i></p>
                 <div>{{ result|safe }}</div>
@@ -234,10 +242,8 @@ html_template = """
                     modeInput.value = 'NL';
                     toggleButton.textContent = 'NL';
                 }
-                // Save the state of the toggle button
                 localStorage.setItem('toggleButtonState', modeInput.value);
             }
-            // Load the state of the toggle button
             window.onload = function() {
                 var toggleButton = document.getElementById('toggleButton');
                 var modeInput = document.getElementById('modeInput');
@@ -253,7 +259,6 @@ html_template = """
                 }
             }
             document.getElementById('textForm').onsubmit = function() {
-                // Scroll to the top of the page after form submission
                 setTimeout(function() {
                     window.scrollTo(0, 0);
                 }, 100);
