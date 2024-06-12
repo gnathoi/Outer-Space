@@ -56,29 +56,28 @@ def display_query_results(results):
 
 
 def graph_to_documents(graph: Graph) -> List[Document]:
-    # Capture prefixes
-    prefix_lines = []
-    for prefix, namespace in graph.namespace_manager.namespaces():
-        prefix_lines.append(f"@prefix {prefix}: <{namespace}> .")
-
-    # Convert RDF statements
-    statements = []
+    subjects = {}
     for subj, pred, obj in graph:
+        if subj not in subjects:
+            subjects[subj] = []
         if isinstance(obj, Literal):
-            obj_repr = f'"{obj}"^^<{obj.datatype}>' if obj.datatype else f'"{obj}"'
+            obj_repr = f'"{obj}"'
+            if obj.datatype:
+                obj_repr += f"^^<{obj.datatype}>"
         elif isinstance(obj, URIRef):
             obj_repr = f"<{obj}>"
         else:
             obj_repr = str(obj)
 
-        subj_repr = f"<{subj}>" if isinstance(subj, URIRef) else str(subj)
         pred_repr = f"<{pred}>" if isinstance(pred, URIRef) else str(pred)
+        subjects[subj].append((pred_repr, obj_repr))
 
-        statements.append(f"{subj_repr} {pred_repr} {obj_repr} .")
+    documents = []
+    for subj, properties in subjects.items():
+        properties_str = "\n".join([f"{pred} {obj} ." for pred, obj in properties])
+        document_content = f"<{subj}>:\n{properties_str}"
+        documents.append(Document(page_content=document_content))
 
-    # Combine prefixes and statements into a single document content
-    document_content = "\n".join(prefix_lines + [""] + statements)
-    documents = [Document(page_content=document_content)]
     return documents
 
 
@@ -326,7 +325,7 @@ html_template = """
             <div class="scrollable-div chat-container" id="chatContainer">
                 {% for chat in chat_history %}
                     <div class="chat-message {{ chat.sender }}">
-                        <p>{{ chat.message }}</p>
+                        <p>{{ chat.message|safe }}</p>
                         {% if chat.sender == 'bot' and chat.downloadable %}
                             <form method="post" action="/download">
                                 <input type="hidden" name="result_data" value="{{ chat.result_data }}">
@@ -438,9 +437,7 @@ def index():
                     # Perform the SPARQL query and display the results as a DataFrame
                     query_results = perform_sparql_query(graph, input_text)
                     df = display_query_results(query_results)
-                    result = df.to_html(
-                        classes="dataframe"
-                    )  # Convert DataFrame to HTML
+                    result = df.to_html(classes="dataframe")
                     result_data = df.to_csv(index=False)
                     result_type = "dataframe"
                     chat_history.append(
