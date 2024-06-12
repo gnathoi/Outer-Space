@@ -1,0 +1,70 @@
+@prefix brcomp: <https://w3id.org/brcomp#> .
+@prefix brot: <https://w3id.org/brot#> .
+@prefix brstr: <https://w3id.org/brstr#> .
+@prefix dot: <https://w3id.org/dot#> .
+@prefix ins: <http://example.org/sibbw79366620/RelocBridgeModel#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix reloc: <https://w3id.org/reloc#> .
+@prefix sib: <http://example.org/sibbw79366620#> .
+@prefix asb: <https://w3id.org/asbingowl/core#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sf: <http://www.opengis.net/ont/sf#> .
+@prefix arp: <http://www.arpenteur.org/ontology/Arpenteur.owl#> .
+@prefix dol: <http://www.ldac.org/damage-location/> .
+
+
+ins:Span_0 a brstr:Span ;
+    rdfs:label "Span 0" .
+
+ins:Substructure_Zone a brot:SubStructure ;
+    rdfs:label "Substructure Zone" ;
+    brot:containsComponent ins:Abutment_Span_0;
+    reloc:containedInBottom ins:Bridge .
+
+
+ins:Bridge a brot:Bridge ;
+    rdfs:label "Bridge" ;
+    brcomp:height "7.5"^^xsd:float ;
+    brcomp:length "56.75"^^xsd:float ;
+    brcomp:width "12.0"^^xsd:float ;
+	arp:hasBoundingBox ins:BoundingBox_1 .
+
+ins:Abutment_Span_0 a brcomp:Abutment ;
+    rdfs:label "Abutment_Span_0" ;
+    rdfs:comment "length is default value" ;
+    brcomp:height "5.15"^^xsd:float ;
+    brcomp:length "1.5"^^xsd:float ;
+    brcomp:width "12.0"^^xsd:float ;
+    dot:hasDamageArea ins:DamageArea_NY0LZ32M;
+	arp:hasBoundingBox ins:BoundingBox_1 .
+
+ins:DamageArea_NY0LZ32M a dot:DamageArea ;
+    rdfs:label "DamageArea_NY0LZ32M" ;
+    rdfs:comment "DamageLength: None DamageWidth: None" ;
+    asb:Schaden_ID-Nummer-Schaden 21 ;
+    asb:Schaden_Foto "\\WIDERLAGER VORN - STIRNWAND LINKS UNTEN.JPG" ;
+    brcomp:height "1.72"^^xsd:float ;
+    brcomp:length "1.5"^^xsd:float ;
+    brcomp:width "4.0"^^xsd:float ;
+    dol:hasPartOnGrid ins:BottomRight_1 .
+
+ins:BoundingBox_Bridge a arp:BoundingBox ;
+	rdfs:label "BoundingBox_Bridge" ;
+	sf:hasSurface ins:ProjectEast_1 .
+
+
+ins:BoundingBox_1 a arp:BoundingBox ;
+   rdfs:label "BoundingBox_1" ;
+   sf:hasSurface ins:ComponentEast_1 .
+
+ins:ProjectEast_1 a dol:ProjectEast .
+
+ins:ComponentEast_1 a dol:ProjectEast ;
+   dol:isParallelTo ins:ProjectEast_1 ;
+   dol:hasGrid ins:Grid_1 .
+
+ins:Grid_1 a dol:Grid2x2 ;
+   dol:hasPart ins:BottomRight_1 .
+
+ins:BottomRight_1 a dol:BottomRight .

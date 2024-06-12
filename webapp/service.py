@@ -1,10 +1,11 @@
+import io
 import json
 import os
 
 import pandas as pd
 import rdflib
 import requests
-from flask import Flask, render_template_string, request
+from flask import Flask, render_template_string, request, send_file
 from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -52,10 +53,6 @@ def display_query_results(results):
     return pd.DataFrame(data)
 
 
-ttl_file = "MaintenanceBridgeModel.ttl"  # Change this to your Turtle file path
-graph = load_ttl_file(ttl_file)
-
-
 def graph_to_documents(graph):
     documents = []
     for subj, pred, obj in graph:
@@ -63,7 +60,12 @@ def graph_to_documents(graph):
     return documents
 
 
-rdf_text_data = graph_to_documents(graph)
+ttl_file = "DamageInstances.ttl"  # Change this to your Turtle file path
+ont_ttl_file = "DamageLocationOntology.ttl"
+graph = load_ttl_file(ttl_file)
+# graph_ont = load_ttl_file(ont_ttl_file)
+
+rdf_text_data = graph_to_documents(graph)  # + graph_to_documents(graph_ont)
 
 # Split text data for embeddings
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=0)
@@ -71,7 +73,6 @@ all_splits = text_splitter.split_documents(rdf_text_data)
 
 oembed = OllamaEmbeddings(base_url="http://localhost:11434", model="nomic-embed-text")
 vectorstore = Chroma.from_documents(documents=all_splits, embedding=oembed)
-
 
 app = Flask(__name__)
 
@@ -134,6 +135,7 @@ html_template = """
                 padding: 20px;
                 border-radius: 5px;
                 border: 1px solid #eee;
+                text-align: left;
             }
             .toggle-button {
                 position: absolute;
@@ -184,6 +186,18 @@ html_template = """
                 border: 1px solid #ddd;
                 border-radius: 5px;
             }
+            .download-button {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 5px;
+                background-color: #4682b4;
+                color: #fff;
+                cursor: pointer;
+                margin-top: 10px;
+            }
+            .download-button:hover {
+                background-color: #5f9ea0;
+            }
         </style>
     </head>
     <body>
@@ -197,7 +211,15 @@ html_template = """
             </form>
             <!-- Wrap the result in a scrollable div -->
             <div class="scrollable-div">
+                <p><i>{{ question }}</i></p>
                 <div>{{ result|safe }}</div>
+                {% if result %}
+                <form method="post" action="/download">
+                    <input type="hidden" name="result_data" value="{{ result_data }}">
+                    <input type="hidden" name="result_type" value="{{ result_type }}">
+                    <button type="submit" class="download-button">Download Result</button>
+                </form>
+                {% endif %}
             </div>
         </div>
         <script>
@@ -245,10 +267,14 @@ html_template = """
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = ""
+    question = ""
+    result_data = ""
+    result_type = "text"
     if request.method == "POST":
         try:
             input_text = request.form["input_text"]
             mode = request.form["mode"]
+            question = input_text
             if mode == "NL":
                 # Use the RetrievalQA class and the similarity_search method
                 docs = vectorstore.similarity_search(input_text)
@@ -257,6 +283,8 @@ def index():
                 )
                 res = qachain.invoke({"query": input_text})
                 result = res["result"]
+                result_data = result
+                result_type = "text"
             elif mode == "SPARQL":
                 try:
                     # Perform the SPARQL query and display the results as a DataFrame
@@ -265,11 +293,44 @@ def index():
                     result = df.to_html(
                         classes="dataframe"
                     )  # Convert DataFrame to HTML
+                    result_data = df.to_csv(index=False)
+                    result_type = "dataframe"
                 except ParseException:
                     result = "Error: Invalid SPARQL query"
+                    result_data = result
+                    result_type = "text"
         except KeyError as e:
             result = f"Error: Missing form field - {str(e)}"
-    return render_template_string(html_template, result=result)
+            result_data = result
+            result_type = "text"
+    return render_template_string(
+        html_template,
+        result=result,
+        question=question,
+        result_data=result_data,
+        result_type=result_type,
+    )
+
+
+@app.route("/download", methods=["POST"])
+def download():
+    result_data = request.form["result_data"]
+    result_type = request.form["result_type"]
+    if result_type == "dataframe":
+        output = io.StringIO(result_data)
+        return send_file(
+            io.BytesIO(output.getvalue().encode()),
+            mimetype="text/csv",
+            as_attachment=True,
+            download_name="result.csv",
+        )
+    else:
+        return send_file(
+            io.BytesIO(result_data.encode()),
+            mimetype="text/plain",
+            as_attachment=True,
+            download_name="result.txt",
+        )
 
 
 if __name__ == "__main__":

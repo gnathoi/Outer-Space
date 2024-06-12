@@ -1,0 +1,214 @@
+@prefix : <http://www.ldac.org/damage-location/> .
+@prefix sf: <http://www.opengis.net/ont/sf#> .
+@prefix arp: <http://www.arpenteur.org/ontology/Arpenteur.owl#> .
+@prefix dot: <https://w3id.org/dot#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix brot: <https://w3id.org/brot#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix brcomp: <https://w3id.org//brcomp#> .
+@base <http://www.ldac.org/damage-location/> .
+
+<http://www.ldac.org/damage-location/> rdf:type owl:Ontology ;
+                                        owl:versionIRI <http://www.ldac.org/damage-location/1.0/> .
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://www.ldac.org/damage-location/hasBoundingBox
+:hasBoundingBox rdf:type owl:ObjectProperty ;
+                rdfs:domain brot:Bridge ,
+                            brot:Component ;
+                rdfs:range arp:BoundingBox ;
+                rdfs:comment "An object has a bounding box."@en ;
+                rdfs:label "hasBoundingBox"@en .
+
+
+###  http://www.ldac.org/damage-location/hasDocument
+:hasDocument rdf:type owl:ObjectProperty ;
+             rdfs:domain brot:Component ;
+             rdfs:range foaf:Document ;
+             rdfs:comment "a component has a document."@en ;
+             rdfs:label "hasDocument"@en .
+
+
+###  http://www.ldac.org/damage-location/hasGrid
+:hasGrid rdf:type owl:ObjectProperty ;
+         rdfs:domain sf:Surface ;
+         rdfs:range :Grid ;
+         rdfs:comment "a surface has a grid."@en ;
+         rdfs:label "hasGrid"@en .
+
+
+###  http://www.ldac.org/damage-location/hasPart
+:hasPart rdf:type owl:ObjectProperty ;
+         rdfs:domain :Grid ;
+         rdfs:range :PartOfGrid ;
+         rdfs:comment "a grid has a part."@en ;
+         rdfs:label "hasPart"@en .
+
+
+###  http://www.ldac.org/damage-location/hasPartOnGrid
+:hasPartOnGrid rdf:type owl:ObjectProperty ;
+               rdfs:domain foaf:Document ,
+                           dot:DamageArea ;
+               rdfs:range :PartOfGrid ;
+               rdfs:comment "Something is defined by a part on a grid."@en ;
+               rdfs:label "hasPartOnGrid"@en .
+
+
+###  http://www.ldac.org/damage-location/hasSurface
+:hasSurface rdf:type owl:ObjectProperty ;
+            rdfs:domain arp:BoundingBox ;
+            rdfs:range sf:Surface ;
+            rdfs:comment "A bounding box has a surface."@en ;
+            rdfs:label "hasSurface"@en .
+
+
+###  http://www.ldac.org/damage-location/isParallelTo
+:isParallelTo rdf:type owl:ObjectProperty ,
+                       owl:InverseFunctionalProperty ;
+              rdfs:domain sf:Surface ;
+              rdfs:range sf:Surface ;
+              rdfs:comment "A surface is parallel to another surface."@en ;
+              rdfs:label "isParallelTo"@en .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://www.arpenteur.org/ontology/Arpenteur.owl#BoundingBox
+arp:BoundingBox rdf:type owl:Class ;
+                rdfs:comment "A 3d Bounding Box of a component."@en ;
+                rdfs:label "BoundingBox"@en .
+
+
+###  http://www.ldac.org/damage-location/Bottom
+:Bottom rdf:type owl:Class ;
+        rdfs:subClassOf sf:Surface ;
+        rdfs:comment "The bottom direction defined in the project."@en ;
+        rdfs:label "Bottom"@en .
+
+
+###  http://www.ldac.org/damage-location/BottomLeft
+:BottomLeft rdf:type owl:Class ;
+            rdfs:subClassOf :PartOfGrid .
+
+
+###  http://www.ldac.org/damage-location/BottomRight
+:BottomRight rdf:type owl:Class ;
+             rdfs:subClassOf :PartOfGrid .
+
+
+###  http://www.ldac.org/damage-location/Grid
+:Grid rdf:type owl:Class ;
+      rdfs:comment "A Grid on a 2d surface."@en ;
+      rdfs:label "Grid" .
+
+
+###  http://www.ldac.org/damage-location/Grid1x1
+:Grid1x1 rdf:type owl:Class ;
+         rdfs:subClassOf :Grid ;
+         rdfs:comment "This grid covers the hole surface."@en ;
+         rdfs:label "Grid1x1"@en .
+
+
+###  http://www.ldac.org/damage-location/Grid2x2
+:Grid2x2 rdf:type owl:Class ;
+         rdfs:subClassOf :Grid ;
+         rdfs:comment "A grid that splits the surface into four parts."@en ;
+         rdfs:label "Grid2x2"@en .
+
+
+###  http://www.ldac.org/damage-location/Grid2x3
+:Grid2x3 rdf:type owl:Class ;
+         rdfs:subClassOf :Grid ;
+         rdfs:comment "A grid that splits the surface in two columns and tree rows."@en ;
+         rdfs:label "Grid2x3"@en .
+
+
+###  http://www.ldac.org/damage-location/Grid3x3
+:Grid3x3 rdf:type owl:Class ;
+         rdfs:subClassOf :Grid ;
+         rdfs:label "A grid that splits the surface into nine parts."@en ,
+                    "Grid3x3"@en .
+
+
+###  http://www.ldac.org/damage-location/PartOfGrid
+:PartOfGrid rdf:type owl:Class ;
+            rdfs:comment "A part of a grid."@en ;
+            rdfs:label "PartOfGrid"@en .
+
+
+###  http://www.ldac.org/damage-location/ProjectEast
+:ProjectEast rdf:type owl:Class ;
+             rdfs:subClassOf sf:Surface ;
+             rdfs:comment "The east direction defined in the project."@en ;
+             rdfs:label "ProjectEast"@en .
+
+
+###  http://www.ldac.org/damage-location/ProjectNorth
+:ProjectNorth rdf:type owl:Class ;
+              rdfs:subClassOf sf:Surface ;
+              rdfs:comment "The north direction defined in the project."@en ;
+              rdfs:label "ProjectNorth"@en .
+
+
+###  http://www.ldac.org/damage-location/ProjectSouth
+:ProjectSouth rdf:type owl:Class ;
+              rdfs:subClassOf sf:Surface ;
+              rdfs:comment "The south direction defined in the project."@en ;
+              rdfs:label "ProjectSouth"@en .
+
+
+###  http://www.ldac.org/damage-location/ProjectWest
+:ProjectWest rdf:type owl:Class ;
+             rdfs:subClassOf sf:Surface ;
+             rdfs:comment "The west direction defined in the project."@en ;
+             rdfs:label "ProjectWest"@en .
+
+
+###  http://www.ldac.org/damage-location/Top
+:Top rdf:type owl:Class ;
+     rdfs:subClassOf sf:Surface ;
+     rdfs:comment "The top direction defined in the project."@en ;
+     rdfs:label "Top"@en .
+
+
+###  http://www.ldac.org/damage-location/TopLeft
+:TopLeft rdf:type owl:Class ;
+         rdfs:subClassOf :PartOfGrid .
+
+
+###  http://www.ldac.org/damage-location/TopRight
+:TopRight rdf:type owl:Class ;
+          rdfs:subClassOf :PartOfGrid .
+
+
+###  http://www.opengis.net/ont/sf#Surface
+sf:Surface rdf:type owl:Class .
+
+
+###  http://xmlns.com/foaf/0.1/Document
+foaf:Document rdf:type owl:Class ;
+              rdfs:label "Document"@en .
+
+
+###  https://w3id.org/brot#Bridge
+brot:Bridge rdf:type owl:Class .
+
+
+###  https://w3id.org/brot#Component
+brot:Component rdf:type owl:Class .
+
+
+###  https://w3id.org/dot#DamageArea
+dot:DamageArea rdf:type owl:Class .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi
