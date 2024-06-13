@@ -42,4 +42,4 @@ The aim of this challenge is to devise a scheme for describing spatial relations
 
 ## Installing and running our RAG application
 
-It is located in webapp/. Instructions coming soon. 
+It is located in webapp/. Instructions coming soon.
