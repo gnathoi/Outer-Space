@@ -38,3 +38,8 @@ The aim of this challenge is to devise a scheme for describing spatial relations
 - Goebels et al. 2024, LDAC 2024 [link](https://linkedbuildingdata.net/ldac2024/files/papers/LDAC2024_Camera_9.pdf)
 - Goebels et al., EC3 2024 [link](https://www.researchgate.net/publication/372244144_Transfer_of_implicit_semi-formal_textual_location_descriptions_in_three-dimensional_model_contexts)
 - BrainVoyager v23.0 [link](https://www.brainvoyager.com/bv/doc/UsersGuide/CoordsAndTransforms/SpatialTransformationMatrices.html)
+
+
+## Installing and running our RAG application
+
+It is located in webapp/. Instructions coming soon. 
