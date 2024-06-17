@@ -1,4 +1,5 @@
-import io
+#!/usr/bin/env python3
+
 import json
 import os
 from typing import List
@@ -6,7 +7,7 @@ from typing import List
 import pandas as pd
 import rdflib
 import requests
-from flask import Flask, render_template_string, request, send_file
+from flask import Flask, Response, render_template_string, request
 from langchain.chains import RetrievalQA
 from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -22,7 +23,7 @@ os.environ["USER_AGENT"] = user_agent.strip()
 
 ollama = Ollama(base_url="http://localhost:11434", model="llama3")
 
-ttl_file = "DamageInstances.ttl"  # Change this to your Turtle file path
+ttl_file = "MaintenanceBridgeModel.ttl"  # Change this to your Turtle file path
 
 
 def load_ttl_file(file_path):
@@ -54,6 +55,7 @@ def display_query_results(results):
         data.append(row_dict)
 
     df = pd.DataFrame(data)
+    return df
 
 
 def graph_to_documents(graph: Graph) -> List[Document]:
@@ -82,11 +84,9 @@ def graph_to_documents(graph: Graph) -> List[Document]:
     return documents
 
 
-# ont_ttl_file = "DamageLocationOntology.ttl"
+# Load RDF data
 graph = load_ttl_file(ttl_file)
-# graph_ont = load_ttl_file(ont_ttl_file)
-
-rdf_text_data = graph_to_documents(graph)  # + graph_to_documents(graph_ont)
+rdf_text_data = graph_to_documents(graph)
 
 # Split text data for embeddings
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=0)
@@ -133,26 +133,21 @@ html_template = """
             .dark-mode h1 {
                 color: #d3d3d3;
             }
-            textarea, input[type="submit"] {
+            textarea {
                 box-sizing: border-box;
-                width: 100%;
+                width: calc(100% - 60px); /* Account for button width and margin */
                 padding: 12px;
                 margin: 10px 0;
                 border-radius: 5px;
                 border: 1px solid #ccc;
                 font-size: 16px;
                 transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-            }
-            textarea {
-                height: 200px;
-                resize: horizontal;
-                overflow: auto;
                 position: relative;
             }
             .stop-button {
                 position: absolute;
-                bottom: 10px;
-                right: 10px;
+                bottom: 15px;
+                right: 15px;
                 background-color: white;
                 border: 2px solid black;
                 border-radius: 50%;
@@ -162,8 +157,14 @@ html_template = """
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                transition: background-color 0.3s;
             }
             .stop-button::before {
+                content: "▶";
+                color: black;
+                font-size: 20px;
+            }
+            .stop-button.thinking::before {
                 content: "■";
                 color: black;
                 font-size: 20px;
@@ -181,20 +182,6 @@ html_template = """
                 100% {
                     box-shadow: 0 0 10px rgba(70, 130, 180, 0.7);
                 }
-            }
-            input[type="submit"] {
-                padding: 12px 20px;
-                border: none;
-                border-radius: 5px;
-                background-color: #4682b4;
-                color: #fff;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: bold;
-                transition: background-color 0.3s;
-            }
-            input[type="submit"]:hover {
-                background-color: #5f9ea0;
             }
             p {
                 padding: 20px;
@@ -296,16 +283,14 @@ html_template = """
                 background-color: #1e1e1e;
                 color: #ffffff;
             }
-            .dark-mode textarea, .dark-mode input[type="submit"], .dark-mode p, .dark-mode .scrollable-div {
+            .dark-mode textarea, .dark-mode p, .dark-mode .scrollable-div {
                 background-color: #333;
                 color: #ffffff;
                 border-color: #555;
             }
-            .dark-mode input[type="submit"] {
-                background-color: #5f9ea0;
-            }
-            .dark-mode input[type="submit"]:hover {
-                background-color: #4682b4;
+            .dark-mode .stop-button {
+                background-color: white;
+                border-color: black;
             }
             .chat-container {
                 display: flex;
@@ -337,26 +322,14 @@ html_template = """
                 <span class="icon">🌜</span>
             </div>
             <h1>RAGdol</h1>
-            <form method="post" id="textForm">
+            <form id="textForm">
                 <input type="hidden" name="mode" id="modeInput" value="NL">
-                <textarea name="input_text" id="inputText" required></textarea>
-                <input type="submit" value="Submit">
-                <button type="button" class="stop-button" id="stopButton"></button>
+                <div style="position: relative;">
+                    <textarea name="input_text" id="inputText" required></textarea>
+                    <button type="button" class="stop-button" id="stopButton"></button>
+                </div>
             </form>
-            <div class="scrollable-div chat-container" id="chatContainer">
-                {% for chat in chat_history %}
-                    <div class="chat-message {{ chat.sender }}">
-                        <p>{{ chat.message|safe }}</p>
-                        {% if chat.sender == 'bot' and chat.downloadable %}
-                            <form method="post" action="/download">
-                                <input type="hidden" name="result_data" value="{{ chat.result_data }}">
-                                <input type="hidden" name="result_type" value="{{ chat.result_type }}">
-                                <button type="submit" class="download-button">Download Result</button>
-                            </form>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            </div>
+            <div class="scrollable-div chat-container" id="chatContainer"></div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <script>
@@ -400,25 +373,42 @@ html_template = """
                     document.body.classList.add('dark-mode');
                     document.getElementById('darkModeButton').innerHTML = '<span class="icon">🌞</span>';
                 }
-                renderMarkdown();
             }
-            document.getElementById('textForm').onsubmit = function() {
-                var inputText = document.getElementById('inputText');
-                inputText.classList.add('thinking');
-                setTimeout(function() {
-                    window.scrollTo(0, 0);
-                }, 100);
-            };
             document.getElementById('stopButton').onclick = function() {
                 var inputText = document.getElementById('inputText');
-                inputText.classList.remove('thinking');
-                inputText.value = '';
-                inputText.focus();
-                document.getElementById('textForm').reset();
+                if (inputText.classList.contains('thinking')) {
+                    inputText.classList.remove('thinking');
+                    this.classList.remove('thinking');
+                    inputText.value = '';
+                    inputText.focus();
+                    document.getElementById('textForm').reset();
+                } else {
+                    startRequest();
+                    inputText.classList.add('thinking');
+                    this.classList.add('thinking');
+                }
             };
-            function renderMarkdown() {
-                var resultBox = document.getElementById('result');
-                resultBox.innerHTML = marked(resultBox.innerText);
+            function startRequest() {
+                var form = document.getElementById('textForm');
+                var formData = new FormData(form);
+                var eventSource = new EventSource('/stream?' + new URLSearchParams(formData).toString());
+
+                eventSource.onmessage = function(event) {
+                    var chatContainer = document.getElementById('chatContainer');
+                    var newMessage = document.createElement('div');
+                    newMessage.classList.add('chat-message', 'bot');
+                    newMessage.innerHTML = '<p>' + event.data + '</p>';
+                    chatContainer.appendChild(newMessage);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                };
+
+                eventSource.onerror = function() {
+                    eventSource.close();
+                    var inputText = document.getElementById('inputText');
+                    inputText.classList.remove('thinking');
+                    var stopButton = document.getElementById('stopButton');
+                    stopButton.classList.remove('thinking');
+                };
             }
         </script>
     </body>
@@ -426,103 +416,37 @@ html_template = """
 """
 
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET"])
 def index():
-    result = ""
-    question = ""
-    result_data = ""
-    result_type = "text"
-    chat_history = []
-    if request.method == "POST":
+    return render_template_string(html_template)
+
+
+@app.route("/stream", methods=["GET"])
+def stream():
+    mode = request.args.get("mode")
+    input_text = request.args.get("input_text")
+
+    def generate_nl_response():
+        docs = vectorstore.similarity_search(input_text)
+        qachain = RetrievalQA.from_chain_type(
+            ollama, retriever=vectorstore.as_retriever()
+        )
+        res = qachain.invoke({"query": input_text})
+        for line in res["result"].splitlines():
+            yield f"data: {line}\n\n"
+
+    if mode == "NL":
+        return Response(generate_nl_response(), mimetype="text/event-stream")
+    elif mode == "SPARQL":
         try:
-            input_text = request.form["input_text"]
-            mode = request.form["mode"]
-            question = input_text
-            chat_history.append(
-                {"sender": "user", "message": question, "downloadable": False}
+            query_results = perform_sparql_query(graph, input_text)
+            df = display_query_results(query_results)
+            result = df.to_html(classes="dataframe")
+            return Response(f"data: {result}\n\n", mimetype="text/event-stream")
+        except ParseException:
+            return Response(
+                "data: Error: Invalid SPARQL query\n\n", mimetype="text/event-stream"
             )
-            if mode == "NL":
-                # Use the RetrievalQA class and the similarity_search method
-                docs = vectorstore.similarity_search(input_text)
-                qachain = RetrievalQA.from_chain_type(
-                    ollama, retriever=vectorstore.as_retriever()
-                )
-                res = qachain.invoke({"query": input_text})
-                result = res["result"]
-                result_data = result
-                result_type = "text"
-                chat_history.append(
-                    {
-                        "sender": "bot",
-                        "message": result,
-                        "downloadable": True,
-                        "result_data": result_data,
-                        "result_type": result_type,
-                    }
-                )
-            elif mode == "SPARQL":
-                try:
-                    # Perform the SPARQL query and display the results as a DataFrame
-                    query_results = perform_sparql_query(graph, input_text)
-                    df = display_query_results(query_results)
-                    result = df.to_html(classes="dataframe")
-                    result_data = df.to_csv(index=False)
-                    result_type = "dataframe"
-                    chat_history.append(
-                        {
-                            "sender": "bot",
-                            "message": result,
-                            "downloadable": True,
-                            "result_data": result_data,
-                            "result_type": result_type,
-                        }
-                    )
-                except ParseException:
-                    result = "Error: Invalid SPARQL query"
-                    result_data = result
-                    result_type = "text"
-                    chat_history.append(
-                        {"sender": "bot", "message": result, "downloadable": False}
-                    )
-        except KeyError as e:
-            result = f"Error: Missing form field - {str(e)}"
-            result_data = result
-            result_type = "text"
-            chat_history.append(
-                {"sender": "bot", "message": result, "downloadable": False}
-            )
-    else:
-        # Load chat history from previous sessions or start fresh
-        chat_history = []
-    return render_template_string(
-        html_template,
-        result=result,
-        question=question,
-        result_data=result_data,
-        result_type=result_type,
-        chat_history=chat_history,
-    )
-
-
-@app.route("/download", methods=["POST"])
-def download():
-    result_data = request.form["result_data"]
-    result_type = request.form["result_type"]
-    if result_type == "dataframe":
-        output = io.StringIO(result_data)
-        return send_file(
-            io.BytesIO(output.getvalue().encode()),
-            mimetype="text/csv",
-            as_attachment=True,
-            download_name="result.csv",
-        )
-    else:
-        return send_file(
-            io.BytesIO(result_data.encode()),
-            mimetype="text/plain",
-            as_attachment=True,
-            download_name="result.txt",
-        )
 
 
 if __name__ == "__main__":
