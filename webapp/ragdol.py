@@ -1,7 +1,6 @@
 import io
 import json
 import os
-import re
 from typing import List
 
 import pandas as pd
@@ -23,6 +22,8 @@ os.environ["USER_AGENT"] = user_agent.strip()
 
 ollama = Ollama(base_url="http://localhost:11434", model="llama3")
 
+ttl_file = "DamageInstances.ttl"  # Change this to your Turtle file path
+
 
 def load_ttl_file(file_path):
     graph = rdflib.Graph()
@@ -33,15 +34,6 @@ def load_ttl_file(file_path):
 def perform_sparql_query(graph, query):
     """Perform a SPARQL query on the RDFLib graph."""
     return graph.query(query)
-
-
-def replace_prefix(dataframe):
-    """Replace the prefix in each entry of the dataframe with 'ins:'."""
-
-    def replace_uri(uri):
-        return re.sub(r".*#", "ins:", uri)
-
-    return dataframe.applymap(replace_uri)
 
 
 def display_query_results(results):
@@ -61,10 +53,7 @@ def display_query_results(results):
             row_dict[str(field)] = value
         data.append(row_dict)
 
-    # Create and display a DataFrame
     df = pd.DataFrame(data)
-    df = replace_prefix(df)
-    return df
 
 
 def graph_to_documents(graph: Graph) -> List[Document]:
@@ -93,12 +82,11 @@ def graph_to_documents(graph: Graph) -> List[Document]:
     return documents
 
 
-ttl_file = "DamageInstances.ttl"  # Change this to your Turtle file path
-ont_ttl_file = "DamageLocationOntology.ttl"
+# ont_ttl_file = "DamageLocationOntology.ttl"
 graph = load_ttl_file(ttl_file)
-graph_ont = load_ttl_file(ont_ttl_file)
+# graph_ont = load_ttl_file(ont_ttl_file)
 
-rdf_text_data = graph_to_documents(graph) + graph_to_documents(graph_ont)
+rdf_text_data = graph_to_documents(graph)  # + graph_to_documents(graph_ont)
 
 # Split text data for embeddings
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=0)
