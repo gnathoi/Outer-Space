@@ -90,6 +90,7 @@ html_template = """
                 margin: 0;
                 padding: 0;
                 display: flex;
+                flex-direction: column;
                 justify-content: center;
                 align-items: center;
                 height: 100vh;
@@ -104,7 +105,19 @@ html_template = """
                 padding: 30px;
                 border-radius: 10px;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                height: 90%;
                 transition: background-color 0.3s, color 0.3s;
+            }
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .header .toggle-button, .header .dark-mode-button {
+                margin-left: 10px;
             }
             h1 {
                 color: #333;
@@ -173,9 +186,6 @@ html_template = """
                 transition: background-color 0.3s, color 0.3s, border-color 0.3s;
             }
             .toggle-button {
-                position: absolute;
-                top: 20px;
-                right: 20px;
                 width: 120px;
                 height: 40px;
                 background-color: #4682b4;
@@ -195,9 +205,6 @@ html_template = """
                 background-color: #5f9ea0;
             }
             .dark-mode-button {
-                position: absolute;
-                top: 70px;
-                right: 20px;
                 width: 40px;
                 height: 40px;
                 background-color: #333;
@@ -231,7 +238,7 @@ html_template = """
                 color: white;
             }
             .scrollable-div {
-                max-height: 500px;
+                flex-grow: 1;
                 overflow-y: auto;
                 margin-top: 20px;
                 padding: 20px;
@@ -239,6 +246,8 @@ html_template = """
                 border-radius: 5px;
                 text-align: left;
                 transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+                display: flex;
+                flex-direction: column-reverse; /* New messages appear at the top */
             }
             .download-button {
                 padding: 12px 20px;
@@ -293,23 +302,35 @@ html_template = """
                 align-self: flex-start;
                 background-color: #fce4ec;
             }
+            .footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <div class="toggle-button" id="toggleButton" onclick="toggleMode()">NL</div>
-            <div class="dark-mode-button" id="darkModeButton" onclick="toggleDarkMode()">
-                <span class="icon">🌜</span>
-            </div>
-            <h1>RAGdol</h1>
-            <form id="textForm">
-                <input type="hidden" name="mode" id="modeInput" value="NL">
-                <div style="position: relative;">
-                    <textarea name="input_text" id="inputText" required></textarea>
-                    <button type="button" class="stop-button" id="stopButton"></button>
+            <div class="header">
+                <h1>RAGdol</h1>
+                <div>
+                    <div class="toggle-button" id="toggleButton" onclick="toggleMode()">NL</div>
+                    <div class="dark-mode-button" id="darkModeButton" onclick="toggleDarkMode()">
+                        <span class="icon">🌜</span>
+                    </div>
                 </div>
-            </form>
+            </div>
             <div class="scrollable-div chat-container" id="chatContainer"></div>
+            <div class="footer">
+                <form id="textForm" style="width: 100%;">
+                    <input type="hidden" name="mode" id="modeInput" value="NL">
+                    <div style="position: relative;">
+                        <textarea name="input_text" id="inputText" required></textarea>
+                        <button type="button" class="stop-button" id="stopButton"></button>
+                    </div>
+                </form>
+            </div>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
         <script>
@@ -378,8 +399,7 @@ html_template = """
                     var newMessage = document.createElement('div');
                     newMessage.classList.add('chat-message', 'bot');
                     newMessage.innerHTML = '<p>' + event.data + '</p>';
-                    chatContainer.appendChild(newMessage);
-                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                    chatContainer.prepend(newMessage); // New messages at the top
                 };
 
                 eventSource.onerror = function() {
