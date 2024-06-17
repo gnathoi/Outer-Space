@@ -2,7 +2,6 @@
 
 import json
 import os
-from typing import List
 
 import pandas as pd
 import rdflib
@@ -15,7 +14,6 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_community.llms import Ollama
 from langchain_community.vectorstores import Chroma
 from pyparsing import ParseException
-from rdflib import Graph, Literal, URIRef
 
 response = requests.get("http://httpbin.org/user-agent")
 user_agent = json.loads(response.text)["user-agent"]
@@ -58,39 +56,20 @@ def display_query_results(results):
     return df
 
 
-def graph_to_documents(graph: Graph) -> List[Document]:
-    subjects = {}
-    for subj, pred, obj in graph:
-        if subj not in subjects:
-            subjects[subj] = []
-        if isinstance(obj, Literal):
-            obj_repr = f'"{obj}"'
-            if obj.datatype:
-                obj_repr += f"^^<{obj.datatype}>"
-        elif isinstance(obj, URIRef):
-            obj_repr = f"<{obj}>"
-        else:
-            obj_repr = str(obj)
-
-        pred_repr = f"<{pred}>" if isinstance(pred, URIRef) else str(pred)
-        subjects[subj].append((pred_repr, obj_repr))
-
-    documents = []
-    for subj, properties in subjects.items():
-        properties_str = "\n".join([f"{pred} {obj} ." for pred, obj in properties])
-        document_content = f"<{subj}>:\n{properties_str}"
-        documents.append(Document(page_content=document_content))
-
-    return documents
+# Function to create a document from the Turtle file directly
+def ttl_file_to_document(file_path: str) -> Document:
+    with open(file_path, encoding="utf-8") as file:
+        content = file.read()
+    return Document(page_content=content)
 
 
 # Load RDF data
 graph = load_ttl_file(ttl_file)
-rdf_text_data = graph_to_documents(graph)
+rdf_text_document = ttl_file_to_document(ttl_file)
 
 # Split text data for embeddings
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=0)
-all_splits = text_splitter.split_documents(rdf_text_data)
+all_splits = text_splitter.split_documents([rdf_text_document])
 
 oembed = OllamaEmbeddings(base_url="http://localhost:11434", model="nomic-embed-text")
 vectorstore = Chroma.from_documents(documents=all_splits, embedding=oembed)
@@ -105,8 +84,9 @@ html_template = """
         <meta charset="utf-8">
         <title>RAGdol</title>
         <style>
+            @import url('https://fonts.googleapis.com/css2?family=Charter:wght@400;700&display=swap');
             body {
-                font-family: Arial, sans-serif;
+                font-family: 'Charter', serif;
                 margin: 0;
                 padding: 0;
                 display: flex;
